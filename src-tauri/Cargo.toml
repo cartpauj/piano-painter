@@ -1,6 +1,6 @@
 [package]
 name = "piano-painter"
-version = "0.0.4"
+version = "0.0.5"
 description = "A piano roll sequencer"
 authors = ["you"]
 edition = "2021"

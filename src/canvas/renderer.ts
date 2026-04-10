@@ -126,14 +126,31 @@ function drawNotes(ctx: CanvasRenderingContext2D, vp: ViewportInfo, scrollX: num
     ctx.globalAlpha = isBeingPlayed ? 0.4 : 1.0;
     ctx.fillStyle = data.color;
     if (data.length > 1) {
-      // Rounded rectangle for held notes
+      // Rounded rectangle for held notes (fallback for older Safari without roundRect)
       const rx = x + padding;
       const ry = y + padding;
       const rw = w - padding * 2;
       const rh = CELL_HEIGHT - padding * 2;
-      ctx.beginPath();
-      ctx.roundRect(rx, ry, rw, rh, radius);
-      ctx.fill();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(rx, ry, rw, rh, radius);
+        ctx.fill();
+      } else {
+        // Manual rounded rect for older browsers
+        const r = Math.min(radius, rw / 2, rh / 2);
+        ctx.beginPath();
+        ctx.moveTo(rx + r, ry);
+        ctx.lineTo(rx + rw - r, ry);
+        ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
+        ctx.lineTo(rx + rw, ry + rh - r);
+        ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh);
+        ctx.lineTo(rx + r, ry + rh);
+        ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r);
+        ctx.lineTo(rx, ry + r);
+        ctx.quadraticCurveTo(rx, ry, rx + r, ry);
+        ctx.closePath();
+        ctx.fill();
+      }
     } else {
       ctx.fillRect(
         x + padding,
