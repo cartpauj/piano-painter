@@ -80,13 +80,20 @@ fn load_sample(app: tauri::AppHandle, key: String) -> Result<Option<String>, Str
     let file_name = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(key.as_bytes());
     let pcm_file = format!("{}.pcm", file_name);
 
-    // Check bundled resources first
-    let resource_path = app.path().resource_dir().map_err(|e| e.to_string())?
-        .join("resources").join("samples").join(&pcm_file);
-    if resource_path.exists() {
-        let bytes = fs::read(&resource_path).map_err(|e| e.to_string())?;
-        let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
-        return Ok(Some(b64));
+    // Check bundled resources — try multiple candidate paths since
+    // Tauri's resource bundling layout varies by platform/version
+    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let candidates = [
+        resource_dir.join("resources").join("samples").join(&pcm_file),
+        resource_dir.join("samples").join(&pcm_file),
+        resource_dir.join(&pcm_file),
+    ];
+    for candidate in &candidates {
+        if candidate.exists() {
+            let bytes = fs::read(candidate).map_err(|e| e.to_string())?;
+            let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+            return Ok(Some(b64));
+        }
     }
 
     // Fall back to app data cache
@@ -105,28 +112,52 @@ fn load_sample(app: tauri::AppHandle, key: String) -> Result<Option<String>, Str
 #[tauri::command]
 fn list_cached_samples(app: tauri::AppHandle) -> Result<Vec<String>, String> {
     use base64::Engine;
+    use std::collections::HashSet;
 
-    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    let samples_dir = dir.join("samples");
+    let mut keys: HashSet<String> = HashSet::new();
 
-    if !samples_dir.exists() {
-        return Ok(vec![]);
-    }
-
-    let mut keys = vec![];
-    for entry in fs::read_dir(&samples_dir).map_err(|e| e.to_string())? {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let name = entry.file_name().to_string_lossy().to_string();
-        if let Some(encoded) = name.strip_suffix(".pcm") {
-            if let Ok(key_bytes) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(encoded) {
-                if let Ok(key) = String::from_utf8(key_bytes) {
-                    keys.push(key);
+    // Collect from bundled resources (candidate paths)
+    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let bundled_candidates = [
+        resource_dir.join("resources").join("samples"),
+        resource_dir.join("samples"),
+    ];
+    for dir in &bundled_candidates {
+        if dir.exists() {
+            if let Ok(entries) = fs::read_dir(dir) {
+                for entry in entries.flatten() {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    if let Some(encoded) = name.strip_suffix(".pcm") {
+                        if let Ok(key_bytes) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(encoded) {
+                            if let Ok(key) = String::from_utf8(key_bytes) {
+                                keys.insert(key);
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    Ok(keys)
+    // Collect from app data cache
+    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let app_samples_dir = app_dir.join("samples");
+    if app_samples_dir.exists() {
+        if let Ok(entries) = fs::read_dir(&app_samples_dir) {
+            for entry in entries.flatten() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                if let Some(encoded) = name.strip_suffix(".pcm") {
+                    if let Ok(key_bytes) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(encoded) {
+                        if let Ok(key) = String::from_utf8(key_bytes) {
+                            keys.insert(key);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(keys.into_iter().collect())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

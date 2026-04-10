@@ -1,6 +1,7 @@
-import * as Tone from 'tone';
+// import * as Tone from 'tone'; // disabled with auto-generation fallback
 import { invoke } from '@tauri-apps/api/core';
-import { buildVoices, type SynthMode } from './audio';
+// import { buildVoices } from './audio';
+import type { SynthMode } from './audio';
 
 const SAMPLE_DURATION = 5; // seconds
 const SAMPLE_RATE = 44100;
@@ -14,18 +15,19 @@ function cacheKey(mode: SynthMode, sustained: boolean, note: string): string {
   return `${mode}:${sustained ? 's' : 'd'}:${note}`;
 }
 
-function float32ToBase64(f32: Float32Array): string {
-  const i16 = new Int16Array(f32.length);
-  for (let i = 0; i < f32.length; i++) {
-    i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i] * 32767)));
-  }
-  const bytes = new Uint8Array(i16.buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += 8192) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
-  }
-  return btoa(binary);
-}
+// Disabled with auto-generation fallback
+// function float32ToBase64(f32: Float32Array): string {
+//   const i16 = new Int16Array(f32.length);
+//   for (let i = 0; i < f32.length; i++) {
+//     i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i] * 32767)));
+//   }
+//   const bytes = new Uint8Array(i16.buffer);
+//   let binary = '';
+//   for (let i = 0; i < bytes.length; i += 8192) {
+//     binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+//   }
+//   return btoa(binary);
+// }
 
 function base64ToFloat32(b64: string): Float32Array {
   const binary = atob(b64);
@@ -62,15 +64,16 @@ async function loadFromDisk(key: string): Promise<Float32Array | null> {
   }
 }
 
-async function saveToDisk(key: string, pcm: Float32Array): Promise<void> {
-  try {
-    const b64 = float32ToBase64(pcm);
-    await invoke('save_sample', { key, pcmBase64: b64 });
-    diskKeys.add(key);
-  } catch (err) {
-    console.error('Failed to cache sample to disk:', err);
-  }
-}
+// Disabled with auto-generation fallback
+// async function saveToDisk(key: string, pcm: Float32Array): Promise<void> {
+//   try {
+//     const b64 = float32ToBase64(pcm);
+//     await invoke('save_sample', { key, pcmBase64: b64 });
+//     diskKeys.add(key);
+//   } catch (err) {
+//     console.error('Failed to cache sample to disk:', err);
+//   }
+// }
 
 export async function renderNoteSample(
   mode: SynthMode,
@@ -93,33 +96,34 @@ export async function renderNoteSample(
     }
   }
 
-  // Render fresh
-  const buffer = await Tone.Offline(({ transport }) => {
-    const compressor = new Tone.Compressor({
-      threshold: -18,
-      ratio: 3,
-      attack: 0.003,
-      release: 0.25,
-    }).toDestination();
-    const vol = new Tone.Volume(0).connect(compressor);
+  // Sample not found in bundled resources or cache — throw so we can diagnose
+  throw new Error(`Pre-compiled sample not found for ${key}. Expected to find it in the bundled resources. Resource loading may have failed.`);
 
-    const voices = buildVoices(mode, sustained, vol);
-    const voice = voices[0];
-
-    transport.schedule((t: number) => {
-      voice.trigger(noteName, SAMPLE_DURATION - 0.5, t);
-    }, 0);
-
-    transport.start();
-  }, SAMPLE_DURATION);
-
-  const pcm = buffer.getChannelData(0);
-  cache.set(key, pcm);
-
-  // Persist to disk in background
-  saveToDisk(key, pcm);
-
-  return pcm;
+  // Auto-generation fallback disabled for debugging
+  // const buffer = await Tone.Offline(({ transport }) => {
+  //   const compressor = new Tone.Compressor({
+  //     threshold: -18,
+  //     ratio: 3,
+  //     attack: 0.003,
+  //     release: 0.25,
+  //   }).toDestination();
+  //   const vol = new Tone.Volume(0).connect(compressor);
+  //
+  //   const voices = buildVoices(mode, sustained, vol);
+  //   const voice = voices[0];
+  //
+  //   transport.schedule((t: number) => {
+  //     voice.trigger(noteName, SAMPLE_DURATION - 0.5, t);
+  //   }, 0);
+  //
+  //   transport.start();
+  // }, SAMPLE_DURATION, 1, SAMPLE_RATE);
+  //
+  // const pcm = buffer.getChannelData(0);
+  // cache.set(key, pcm);
+  // saveToDisk(key, pcm);
+  //
+  // return pcm;
 }
 
 export function clearCache(): void {

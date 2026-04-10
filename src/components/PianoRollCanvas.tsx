@@ -51,10 +51,43 @@ export default function PianoRollCanvas() {
     resizeObserver = new ResizeObserver(() => resize());
     resizeObserver.observe(canvas.parentElement!);
 
-    canvas.addEventListener('mousedown', (e) => handleMouseDown(e, canvas!));
-    canvas.addEventListener('mouseup', (e) => handleMouseUp(e, canvas!));
-    canvas.addEventListener('mousemove', (e) => handleMouseMove(e, canvas!));
+    // Use pointer events with capture for reliable drag tracking
+    let pendingMoveEvent: PointerEvent | null = null;
+    let moveScheduled = false;
+
+    const onPointerDown = (e: PointerEvent) => {
+      canvas!.setPointerCapture(e.pointerId);
+      handleMouseDown(e as unknown as MouseEvent, canvas!);
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      pendingMoveEvent = e;
+      if (moveScheduled) return;
+      moveScheduled = true;
+      requestAnimationFrame(() => {
+        moveScheduled = false;
+        if (pendingMoveEvent) {
+          handleMouseMove(pendingMoveEvent as unknown as MouseEvent, canvas!);
+          pendingMoveEvent = null;
+        }
+      });
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      try { canvas!.releasePointerCapture(e.pointerId); } catch {}
+      handleMouseUp(e as unknown as MouseEvent, canvas!);
+    };
+
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
+
+    onCleanup(() => {
+      canvas?.removeEventListener('pointerdown', onPointerDown);
+      canvas?.removeEventListener('pointermove', onPointerMove);
+      canvas?.removeEventListener('pointerup', onPointerUp);
+      canvas?.removeEventListener('pointercancel', onPointerUp);
+    });
   });
 
   onCleanup(() => {

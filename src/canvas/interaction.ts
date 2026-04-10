@@ -13,6 +13,7 @@ let isDraggingNote = false;
 let noteDragStartCol = -1;
 let noteDragRow = -1;
 let noteDragCurrentCol = -1;
+let noteDragMaxCol = -1;
 export function setCanvasHeight(h: number): void {
   canvasHeight = h;
 }
@@ -70,6 +71,17 @@ export function handleMouseDown(e: MouseEvent, canvas: HTMLCanvasElement): void 
   noteDragRow = row;
   noteDragCurrentCol = col;
 
+  // Pre-compute max draggable column (stop before any existing note on this row)
+  noteDragMaxCol = col + 1024;
+  const noteMap = projectState.notes();
+  for (const [key] of noteMap) {
+    const [c, r] = key.split(':').map(Number);
+    if (r !== row) continue;
+    if (c > col && c < noteDragMaxCol) {
+      noteDragMaxCol = c - 1;
+    }
+  }
+
   // Place a single cell note immediately (will be resized on drag)
   projectState.placeNote(col, row, 1);
 
@@ -85,29 +97,9 @@ export function handleMouseMove(e: MouseEvent, canvas: HTMLCanvasElement): void 
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const scrollX = projectState.scrollX();
-  let col = Math.max(noteDragStartCol, xToCol(x, scrollX));
-
-  // Stop drag before any occupied cell (note starting there or covered by another held note)
-  const noteMap = projectState.notes();
-  for (let c = noteDragStartCol + 1; c <= col; c++) {
-    const key = `${c}:${noteDragRow}`;
-    // Check if another note starts here
-    if (noteMap.has(key)) {
-      col = c - 1;
-      break;
-    }
-    // Check if a held note from before our drag covers this cell
-    for (let prev = c - 1; prev >= Math.max(0, c - 64); prev--) {
-      if (prev === noteDragStartCol) break; // our own note, skip
-      const prevData = noteMap.get(`${prev}:${noteDragRow}`);
-      if (prevData && prev + prevData.length > c) {
-        col = c - 1;
-        break;
-      }
-      if (prevData) break;
-    }
-    if (col < c) break;
-  }
+  let col = xToCol(x, scrollX);
+  if (col < noteDragStartCol) col = noteDragStartCol;
+  if (col > noteDragMaxCol) col = noteDragMaxCol;
 
   if (col !== noteDragCurrentCol) {
     noteDragCurrentCol = col;
