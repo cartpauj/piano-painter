@@ -25,6 +25,22 @@ So I built PianoPainter.
 - **Infinite horizontal scrolling** -- your song can be as long as you want
 - **Click measure numbers** to set a playback start point
 
+## Download
+
+Pre-built installers for all supported platforms are available on the [Releases page](https://github.com/cartpauj/piano-painter/releases).
+
+Grab the file that matches your system:
+
+- **macOS (Apple Silicon - M1/M2/M3)** -- `PianoPainter_*_aarch64.dmg`
+- **macOS (Intel)** -- `PianoPainter_*_x64.dmg`
+- **Windows x64** -- `PianoPainter_*_x64_en-US.msi` or `PianoPainter_*_x64-setup.exe`
+- **Linux x64** -- `PianoPainter_*_amd64.deb` (Debian/Ubuntu), `PianoPainter-*.x86_64.rpm` (Fedora/RHEL), or `PianoPainter_*_amd64.AppImage` (universal)
+- **Linux ARM64** -- `PianoPainter_*_arm64.deb`, `PianoPainter-*.aarch64.rpm`, or `PianoPainter_*_aarch64.AppImage`
+
+> **Note for macOS users:** Since PianoPainter isn't signed with an Apple Developer certificate, you may see a warning when you first open it. Right-click the app and choose "Open" to bypass the warning.
+
+> **Note for Linux users:** For `.AppImage` files, you may need to make them executable with `chmod +x PianoPainter_*.AppImage` before running.
+
 ## Building It
 
 You'll need:
