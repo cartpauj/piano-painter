@@ -56,6 +56,14 @@ pnpm tauri build
 - **Click a measure number** at the top to set where playback starts
 - **Stop** resets to the selected measure, **rewind button** goes back to measure 1
 
+## Sample Songs
+
+The `samples/` directory has example project files you can open in the app to see how things work. Give `mary.pp` a try -- it's Mary Had a Little Lamb.
+
+## Pre-rendered Samples
+
+The `src-tauri/resources/samples/` directory contains 366 pre-rendered PCM audio samples -- every note across all 3 synth engines, with and without sustain. These are bundled with the app so MP3 exports are fast out of the box (no rendering needed). If they're missing for some reason, the app will regenerate them on the fly during export.
+
 ## Tech Stack
 
 Built with [Tauri 2](https://v2.tauri.app/), [SolidJS](https://www.solidjs.com/), and [Tone.js](https://tonejs.github.io/). The grid is rendered on HTML Canvas for performance. MP3 encoding happens in Rust via mp3lame.
