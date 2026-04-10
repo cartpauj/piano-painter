@@ -1,5 +1,7 @@
 # PianoPainter
 
+![PianoPainter](samples/piano-painter.png)
+
 A desktop app for composing music by painting notes on a grid. No music degree required.
 
 ## The Story
