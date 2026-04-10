@@ -37,24 +37,19 @@ Grab the file that matches your system:
 - **Linux x64** -- `PianoPainter_*_amd64.deb` (Debian/Ubuntu), `PianoPainter-*.x86_64.rpm` (Fedora/RHEL), or `PianoPainter_*_amd64.AppImage` (universal)
 - **Linux ARM64** -- `PianoPainter_*_arm64.deb`, `PianoPainter-*.aarch64.rpm`, or `PianoPainter_*_aarch64.AppImage`
 
-> **Note for macOS users:** Since PianoPainter isn't signed with an Apple Developer certificate, macOS will block it from opening. How you fix this depends on your macOS version:
->
-> **Older macOS (Monterey and earlier):**
-> 1. Try to open the app — you'll see a warning saying it can't be opened because it's from an unidentified developer.
-> 2. Open **System Preferences → Security & Privacy → General** tab.
-> 3. At the bottom, you'll see a message about PianoPainter being blocked. Click **Open Anyway**.
-> 4. Confirm when prompted.
->
-> **Newer macOS (Ventura and later, especially Apple Silicon):**
-> You may see a message that the app is "damaged and can't be opened" — this is Gatekeeper being overly cautious. To fix it, open Terminal and run:
->
-> ```bash
-> xattr -d com.apple.quarantine /Applications/PianoPainter.app
-> ```
->
-> Then open the app normally. You only need to do this once.
+### macOS Users
 
-> **Note for Linux users:** For `.AppImage` files, you may need to make them executable with `chmod +x PianoPainter_*.AppImage` before running.
+Since PianoPainter isn't signed with an Apple Developer certificate, macOS will block it from opening. You may see a warning saying it can't be opened, or that the app is "damaged" (especially on Apple Silicon). To fix it, install PianoPainter normally (drag to Applications), then open Terminal and run:
+
+```bash
+xattr -d com.apple.quarantine /Applications/PianoPainter.app
+```
+
+Then open the app normally. You only need to do this once.
+
+### Linux Users
+
+For `.AppImage` files, you may need to make them executable with `chmod +x PianoPainter_*.AppImage` before running.
 
 ## Building It
 
