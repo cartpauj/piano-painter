@@ -2637,7 +2637,7 @@ dependencies = [
 
 [[package]]
 name = "piano-painter"
-version = "0.0.3"
+version = "0.0.5"
 dependencies = [
  "base64 0.22.1",
  "mp3lame-encoder",
